@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sorry from Shlok</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      text-align: center;
+    }
+    .hearts {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: #000;
+    }
+    .heart {
+      position: absolute;
+      width: 24px; height: 24px;
+      background: red;
+      transform: rotate(-45deg);
+      animation: floatUp var(--dur) linear infinite;
+      opacity: .8;
+    }
+    .heart::before, .heart::after {
+      content: "";
+      position: absolute;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: red;
+    }
+    .heart::before { top: -12px; left: 0; }
+    .heart::after { left: 12px; top: 0; }
+    @keyframes floatUp {
+      0% { transform: translateY(0) rotate(-45deg) scale(.7); opacity: 0 }
+      20% { opacity: .9 }
+      100% { transform: translateY(-120vh) rotate(-45deg) scale(1); opacity: 0 }
+    }
+
+    .card {
+      width: min(600px, 90%);
+      background: rgba(16,16,24,0.8);
+      border-radius: 20px;
+      padding: 24px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #ff3b81, #ff6b6b);
+      color: white;
+      font-weight: bold;
+      margin: 6px;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+    .karaoke .line {
+      font-size: 22px;
+      color: #aaa;
+      margin: 6px 0;
+      transition: all .3s;
+    }
+    .karaoke .line.active {
+      color: #fff;
+      text-shadow: 0 0 12px #ff6b6b;
+      transform: scale(1.05);
+    }
+    .ending {
+      font-size: 22px;
+      color: #ffcccc;
+      margin-top: 20px;
+      display: none;
+      animation: glowBounce 1.5s infinite;
+    }
+    @keyframes glowBounce {
+      0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 8px #ff6b6b, 0 0 16px #ff3b81;
+      }
+      50% {
+        transform: scale(1.15);
+        text-shadow: 0 0 12px #ff99aa, 0 0 24px #ff3b81;
+      }
+    }
+    footer {
+      margin-top: 14px;
+      font-size: 14px;
+      opacity: .8;
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <main class="card" id="step1">
+    <h1>oyee habdi sorry bol rha hu na 😅</h1>
+    <p>zyada bhaav mt khaao, forgive me chupchaap 😂</p>
+    <button id="sorryBtn">I’m really sorry</button>
+    <button id="nextBtn">Next →</button>
+    <footer>made by shlok</footer>
+  </main>
+
+  <main class="card hidden" id="step2">
+    <h2>A tiny song for you 🎵</h2>
+    <!-- local mp3 -->
+    <audio id="song" src="dhichkyaaon-doom-doom-chashme-baddoor-128-kbps_IqrbSDqi.mp3"></audio>
+    <div>
+      <button id="playBtn">▶ Play</button>
+      <button id="pauseBtn">⏸ Pause</button>
+      <button id="restartBtn">↺ Restart</button>
+    </div>
+    <div class="karaoke" id="karaoke"></div>
+    <div class="ending" id="ending">❤ hope you forgive me after all that 🥺</div>
+    <footer>made by shlok</footer>
+  </main>
+
+  <script>
+    // Floating hearts
+    (function(){
+      const wrap=document.getElementById('hearts');
+      for(let i=0;i<20;i++){
+        const h=document.createElement('div');
+        h.className='heart';
+        h.style.left=Math.random()*100+'vw';
+        h.style.bottom='-40px';
+        h.style.setProperty('--dur',(6+Math.random()*6)+'s');
+        wrap.appendChild(h);
+      }
+    })();
+
+    // Steps
+    const step1=document.getElementById('step1');
+    const step2=document.getElementById('step2');
+    const sorryBtn=document.getElementById('sorryBtn');
+    const nextBtn=document.getElementById('nextBtn');
+    let saidSorry=false;
+    sorryBtn.onclick=()=>{ saidSorry=true; sorryBtn.textContent="Thank you ❤️"; sorryBtn.disabled=true; }
+    nextBtn.onclick=()=>{
+      if(!saidSorry){ nextBtn.textContent="Say sorry first ☝️"; setTimeout(()=>nextBtn.textContent="Next →",1500); return; }
+      step1.classList.add('hidden'); step2.classList.remove('hidden');
+    }
+
+    // Karaoke lyrics
+    const LINES=[
+      {t:0.5,text:"aree jab tu bhadakti hai"},
+      {t:4.0,text:"dil pe chale goliyaan hayee"},
+      {t:7.3,text:"dinchkayoon doom-doom"},
+      {t:10.2,text:"mai or tum tum tum tum"}
+    ];
+    const karaokeEl=document.getElementById('karaoke');
+    LINES.forEach((l,i)=>{
+      let d=document.createElement('div');
+      d.className='line';
+      d.id='line_'+i;
+      d.textContent=l.text;
+      karaokeEl.appendChild(d);
+    });
+
+    const song=document.getElementById('song');
+    const ending=document.getElementById('ending');
+    let rafId;
+    function updateKaraoke(){
+      const elapsed=song.currentTime;
+      let active=-1;
+      for(let i=0;i<LINES.length;i++){ if(elapsed>=LINES[i].t) active=i; }
+      LINES.forEach((_,i)=>{ document.getElementById('line_'+i).classList.toggle('active',i===active); });
+
+      if(elapsed >= 13){ ending.style.display="block"; }
+
+      if(!song.paused) rafId=requestAnimationFrame(updateKaraoke);
+    }
+
+    document.getElementById('playBtn').onclick=()=>{ song.play(); updateKaraoke(); }
+    document.getElementById('pauseBtn').onclick=()=>{ song.pause(); cancelAnimationFrame(rafId); }
+    document.getElementById('restartBtn').onclick=()=>{ song.currentTime=0; song.play(); ending.style.display="none"; updateKaraoke(); }
+  </script>
+</body>
+</html>
